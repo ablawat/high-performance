@@ -11,16 +11,44 @@
 
 int main()
 {
-    const size_t dataSize = sizeof(char) * SIZE_X * SIZE_Y * 3;
+    int i, j;
     
-    char *image  = malloc(dataSize);
-    char *result = malloc(dataSize);
+    char **image  = malloc(sizeof(char *) * SIZE_Y);
+    char **result = malloc(sizeof(char *) * SIZE_Y);
     
-    memset(result, 0, dataSize);
+    for (i = 0; i < SIZE_Y; i++)
+    {
+        image[i]  = malloc(sizeof(char) * SIZE_X * 3);
+        result[i] = malloc(sizeof(char) * SIZE_X * 3);
+        
+        memset(result[i], 0, SIZE_X * 3);
+    }
     
     int file = open("/mnt/adam-2/dane/image-1-128-128.raw", O_RDONLY);
     
-    read(file, image, dataSize);
+    for (i = 0; i < SIZE_Y; i++)
+    {
+        read(file, image[i], SIZE_X * 3);
+    }
+    
+    close(file);
+    
+    for (i = 0; i < SIZE_Y; i++)
+    {
+        for (j = 3; j < SIZE_X * 3; j++)
+        {
+            result[i][j] = (char)abs(image[i][j] - image[i][j - 3]);
+        }
+    }
+    
+    file = open("/mnt/adam-2/dane/image-1-128-128-edges.raw", O_WRONLY | O_CREAT, S_IRUSR);
+    
+    for (i = 0; i < SIZE_Y; i++)
+    {
+        write(file, result[i], SIZE_X * 3);
+    }
+    
+    close(file);
     
     return 0;
 }
