@@ -11,8 +11,7 @@
 
 int main(int argc, char **args)
 {
-    char inFileName[128];
-    char outFileName[128];
+    char fileName[128];
     
     int values[4];
     int maxValue;
@@ -30,7 +29,7 @@ int main(int argc, char **args)
     int i, j, k;
     
     
-    strcpy(inFileName, args[1]);
+    strcpy(fileName, args[1]);
     sizeX = atoi(args[2]);
     sizeY = atoi(args[3]);
     
@@ -48,7 +47,7 @@ int main(int argc, char **args)
     
     clock_gettime(CLOCK_REALTIME, &ts1);
 
-    int file = open(inFileName, O_RDONLY);
+    int file = open(fileName, O_RDONLY);
     
     for (i = 0; i < sizeY; i++)
     {
@@ -92,7 +91,9 @@ int main(int argc, char **args)
     
     clock_gettime(CLOCK_REALTIME, &ts1);
     
-    file = open(outFileName, O_WRONLY | O_CREAT, S_IRUSR);
+    strcat(fileName, "-edges");
+    
+    file = open(fileName, O_WRONLY | O_CREAT, S_IRUSR);
     
     for (i = 0; i < sizeY; i++)
     {
