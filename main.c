@@ -9,13 +9,10 @@
 
 #define MLD 1000000000.0
 
-#define SIZE_X 1920
-#define SIZE_Y 1080
-
-int main()
+int main(int argc, char **args)
 {
-    const char inFileName[]  = "/mnt/adam-2/dane/nature-2-1920-1080.raw";
-    const char outFileName[] = "/mnt/adam-2/dane/nature-2-1920-1080-edges.raw";
+    char inFileName[128];
+    char outFileName[128];
     
     int values[4];
     int maxValue;
@@ -23,30 +20,39 @@ int main()
     struct timespec ts1;
     struct timespec ts2;
     
+    unsigned int sizeX;
+    unsigned int sizeY;
+    
     double time1;
     double time2;
     double time3;
     
     int i, j, k;
     
-    char **image  = malloc(sizeof(char *) * SIZE_Y);
-    char **result = malloc(sizeof(char *) * SIZE_Y);
     
-    for (i = 0; i < SIZE_Y; i++)
+    strcpy(inFileName, args[1]);
+    sizeX = atoi(args[2]);
+    sizeY = atoi(args[3]);
+    
+    
+    char **image  = malloc(sizeof(char *) * sizeY);
+    char **result = malloc(sizeof(char *) * sizeY);
+    
+    for (i = 0; i < sizeY; i++)
     {
-        image[i]  = malloc(sizeof(char) * SIZE_X * 3);
-        result[i] = malloc(sizeof(char) * SIZE_X * 3);
+        image[i]  = malloc(sizeof(char) * sizeX * 3);
+        result[i] = malloc(sizeof(char) * sizeX * 3);
         
-        memset(result[i], 0, SIZE_X * 3);
+        memset(result[i], 0, sizeX * 3);
     }
     
     clock_gettime(CLOCK_REALTIME, &ts1);
 
     int file = open(inFileName, O_RDONLY);
     
-    for (i = 0; i < SIZE_Y; i++)
+    for (i = 0; i < sizeY; i++)
     {
-        read(file, image[i], SIZE_X * 3);
+        read(file, image[i], sizeX * 3);
     }
     
     close(file);
@@ -57,9 +63,9 @@ int main()
     
     clock_gettime(CLOCK_REALTIME, &ts1);
     
-    for (i = 1; i < SIZE_Y - 1; i++)
+    for (i = 1; i < sizeY - 1; i++)
     {
-        for (j = 3; j < SIZE_X * 3 - 3; j++)
+        for (j = 3; j < sizeX * 3 - 3; j++)
         {
             values[0] = abs(image[i][j] - image[i][j - 3]);
             values[1] = abs(image[i][j] - image[i - 1][j - 3]);
@@ -88,9 +94,9 @@ int main()
     
     file = open(outFileName, O_WRONLY | O_CREAT, S_IRUSR);
     
-    for (i = 0; i < SIZE_Y; i++)
+    for (i = 0; i < sizeY; i++)
     {
-        write(file, result[i], SIZE_X * 3);
+        write(file, result[i], sizeX * 3);
     }
     
     close(file);
