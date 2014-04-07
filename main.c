@@ -5,6 +5,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <string.h>
+#include <time.h>
+
+#define MLD 1000000000.0
 
 #define SIZE_X 1920
 #define SIZE_Y 1080
@@ -16,6 +19,13 @@ int main()
     
     int values[4];
     int maxValue;
+    
+    struct timespec ts1;
+    struct timespec ts2;
+    
+    double time1;
+    double time2;
+    double time3;
     
     int i, j, k;
     
@@ -30,6 +40,8 @@ int main()
         memset(result[i], 0, SIZE_X * 3);
     }
     
+    clock_gettime(CLOCK_REALTIME, &ts1);
+
     int file = open(inFileName, O_RDONLY);
     
     for (i = 0; i < SIZE_Y; i++)
@@ -38,6 +50,12 @@ int main()
     }
     
     close(file);
+    
+    clock_gettime(CLOCK_REALTIME, &ts2);
+    
+    time1 = (ts2.tv_sec + ts2.tv_nsec / MLD) - (ts1.tv_sec + ts1.tv_nsec / MLD);
+    
+    clock_gettime(CLOCK_REALTIME, &ts1);
     
     for (i = 1; i < SIZE_Y - 1; i++)
     {
@@ -62,6 +80,12 @@ int main()
         }
     }
     
+    clock_gettime(CLOCK_REALTIME, &ts2);
+    
+    time2 = (ts2.tv_sec + ts2.tv_nsec / MLD) - (ts1.tv_sec + ts1.tv_nsec / MLD);
+    
+    clock_gettime(CLOCK_REALTIME, &ts1);
+    
     file = open(outFileName, O_WRONLY | O_CREAT, S_IRUSR);
     
     for (i = 0; i < SIZE_Y; i++)
@@ -70,6 +94,14 @@ int main()
     }
     
     close(file);
+    
+    clock_gettime(CLOCK_REALTIME, &ts2);
+    
+    time3 = (ts2.tv_sec + ts2.tv_nsec / MLD) - (ts1.tv_sec + ts1.tv_nsec / MLD);
+    
+    printf("Read Time  = %3.10lf\n", time1);
+    printf("Calc Time  = %3.10lf\n", time2);
+    printf("Write Time = %3.10lf\n", time3);
     
     return 0;
 }
