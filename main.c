@@ -9,12 +9,28 @@
 
 #define MLD 1000000000.0
 
+typedef struct pixel
+{
+    unsigned char red;
+    unsigned char green;
+    unsigned char blue;
+}
+Pixel;
+
+enum MaskSize
+{
+    MASK_3,
+    MASK_5,
+    MASK_7
+};
+
 int main(int argc, char **args)
 {
     char fileName[128];
     
     int values[4];
     int maxValue;
+    int io_result;
     
     struct timespec ts1;
     struct timespec ts2;
@@ -39,10 +55,10 @@ int main(int argc, char **args)
     
     for (i = 0; i < sizeY; i++)
     {
-        image[i]  = malloc(sizeof(char) * sizeX * 3);
-        result[i] = malloc(sizeof(char) * sizeX * 3);
+        image[i]  = malloc(sizeof(Pixel) * sizeX);
+        result[i] = malloc(sizeof(Pixel) * sizeX);
         
-        memset(result[i], 0, sizeX * 3);
+        memset(result[i], 0, sizeX * sizeof(Pixel));
     }
     
     clock_gettime(CLOCK_REALTIME, &ts1);
@@ -51,7 +67,12 @@ int main(int argc, char **args)
     
     for (i = 0; i < sizeY; i++)
     {
-        read(file, image[i], sizeX * 3);
+        io_result = read(file, image[i], sizeX * sizeof(Pixel));
+        
+        if (io_result == -1)
+        {
+            fputs("Read error\n", stderr);
+        }
     }
     
     close(file);
@@ -62,28 +83,7 @@ int main(int argc, char **args)
     
     clock_gettime(CLOCK_REALTIME, &ts1);
     
-    for (i = 1; i < sizeY - 1; i++)
-    {
-        for (j = 3; j < sizeX * 3 - 3; j++)
-        {
-            values[0] = abs(image[i][j] - image[i][j - 3]);
-            values[1] = abs(image[i][j] - image[i - 1][j - 3]);
-            values[2] = abs(image[i][j] - image[i - 1][j]);
-            values[3] = abs(image[i][j] - image[i - 1][j + 3]);
-            
-            maxValue = values[0];
-            
-            for (k = 1; k < 4; k++)
-            {
-                if (values[k] > maxValue)
-                {
-                    maxValue = values[k];
-                }
-            }
-            
-            result[i][j] = (char)maxValue;
-        }
-    }
+    
     
     clock_gettime(CLOCK_REALTIME, &ts2);
     
@@ -91,13 +91,13 @@ int main(int argc, char **args)
     
     clock_gettime(CLOCK_REALTIME, &ts1);
     
-    strcat(fileName, "-edges");
+    strcat(fileName, "-mask");
     
     file = open(fileName, O_WRONLY | O_CREAT, S_IRUSR);
     
     for (i = 0; i < sizeY; i++)
     {
-        write(file, result[i], sizeX * 3);
+        write(file, result[i], sizeX * sizeof(Pixel));
     }
     
     close(file);
