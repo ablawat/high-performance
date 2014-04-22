@@ -17,12 +17,13 @@ typedef struct pixel
 }
 Pixel;
 
-enum MaskSize
+typedef enum mask_size
 {
     MASK_3,
     MASK_5,
     MASK_7
-};
+}
+MaskSize;
 
 int main(int argc, char **args)
 {
@@ -31,12 +32,18 @@ int main(int argc, char **args)
     int values[4];
     int maxValue;
     int io_result;
+    int extended;
     
     struct timespec ts1;
     struct timespec ts2;
     
     unsigned int sizeX;
     unsigned int sizeY;
+    
+    unsigned int extendedSizeX;
+    unsigned int extendedSizeY;
+    
+    MaskSize mask = MASK_3;
     
     double time1;
     double time2;
@@ -50,24 +57,34 @@ int main(int argc, char **args)
     sizeY = atoi(args[3]);
     
     
-    char **image  = malloc(sizeof(char *) * sizeY);
-    char **result = malloc(sizeof(char *) * sizeY);
-    
-    for (i = 0; i < sizeY; i++)
+    switch (mask)
     {
-        image[i]  = malloc(sizeof(Pixel) * sizeX);
+    	case MASK_3: extended = 2;
+    	             break;
+    	case MASK_5: extended = 4;
+    	             break;
+    	case MASK_7: extended = 6;
+    	             break;
+    }
+    
+    
+    
+    Pixel **image  = malloc(sizeof(Pixel *) * (sizeY + extended));
+    Pixel **result = malloc(sizeof(Pixel *) * sizeY);
+    
+    for (i = 0; i < sizeY + extended; i++)
+    {
+        image[i]  = malloc(sizeof(Pixel) * (sizeX + extended));
         result[i] = malloc(sizeof(Pixel) * sizeX);
-        
-        memset(result[i], 0, sizeX * sizeof(Pixel));
     }
     
     clock_gettime(CLOCK_REALTIME, &ts1);
 
     int file = open(fileName, O_RDONLY);
     
-    for (i = 0; i < sizeY; i++)
+    for (i = extended / 2; i < sizeY; i++)
     {
-        io_result = read(file, image[i], sizeX * sizeof(Pixel));
+        io_result = read(file, image[i] + (extended / 2), sizeX * sizeof(Pixel));
         
         if (io_result == -1)
         {
@@ -76,6 +93,13 @@ int main(int argc, char **args)
     }
     
     close(file);
+    
+    // Kopiowanie skrajnych pikseli do obszaru rozszerzonego
+    for (i = 0; i < extended / 2; i++)
+    {
+    	memcpy(image[i], image[extended / 2], sizeof(Pixel) * (sizeX + extended));
+    	//memcpy()
+    }
     
     clock_gettime(CLOCK_REALTIME, &ts2);
     
@@ -97,7 +121,12 @@ int main(int argc, char **args)
     
     for (i = 0; i < sizeY; i++)
     {
-        write(file, result[i], sizeX * sizeof(Pixel));
+        io_result = write(file, result[i], sizeX * sizeof(Pixel));
+        
+        if (io_result == -1)
+        {
+            fputs("Write error\n", stderr);
+        }
     }
     
     close(file);
