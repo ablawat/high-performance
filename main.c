@@ -27,21 +27,21 @@ MaskSize;
 
 int main(int argc, char **args)
 {
-    char fileName[128];
+    char file_name[128];
     
     int values[4];
-    int maxValue;
+    int max_value;
     int io_result;
     int extended;
     
     struct timespec ts1;
     struct timespec ts2;
     
-    unsigned int sizeX;
-    unsigned int sizeY;
+    unsigned int size_x;
+    unsigned int size_y;
     
-    unsigned int extendedSizeX;
-    unsigned int extendedSizeY;
+    unsigned int extended_size_x;
+    unsigned int extended_size_y;
     
     MaskSize mask = MASK_3;
     
@@ -52,9 +52,9 @@ int main(int argc, char **args)
     int i, j, k;
     
     
-    strcpy(fileName, args[1]);
-    sizeX = atoi(args[2]);
-    sizeY = atoi(args[3]);
+    strcpy(file_name, args[1]);
+    size_x = atoi(args[2]);
+    size_y = atoi(args[3]);
     
     
     switch (mask)
@@ -67,24 +67,25 @@ int main(int argc, char **args)
     	             break;
     }
     
+    extended_size_x = size_x + extended;
+    extended_size_y = size_y + extended;
     
+    Pixel **image  = malloc(sizeof(Pixel *) * (size_y + extended));
+    Pixel **result = malloc(sizeof(Pixel *) * size_y);
     
-    Pixel **image  = malloc(sizeof(Pixel *) * (sizeY + extended));
-    Pixel **result = malloc(sizeof(Pixel *) * sizeY);
-    
-    for (i = 0; i < sizeY + extended; i++)
+    for (i = 0; i < size_y + extended; i++)
     {
-        image[i]  = malloc(sizeof(Pixel) * (sizeX + extended));
-        result[i] = malloc(sizeof(Pixel) * sizeX);
+        image[i]  = malloc(sizeof(Pixel) * (size_x + extended));
+        result[i] = malloc(sizeof(Pixel) * size_x);
     }
     
     clock_gettime(CLOCK_REALTIME, &ts1);
 
-    int file = open(fileName, O_RDONLY);
+    int file = open(file_name, O_RDONLY);
     
-    for (i = extended / 2; i < sizeY; i++)
+    for (i = extended / 2; i < size_y; i++)
     {
-        io_result = read(file, image[i] + (extended / 2), sizeX * sizeof(Pixel));
+        io_result = read(file, image[i] + (extended / 2), size_x * sizeof(Pixel));
         
         if (io_result == -1)
         {
@@ -97,7 +98,7 @@ int main(int argc, char **args)
     // Kopiowanie skrajnych pikseli do obszaru rozszerzonego
     for (i = 0; i < extended / 2; i++)
     {
-    	memcpy(image[i], image[extended / 2], sizeof(Pixel) * (sizeX + extended));
+    	memcpy(image[i], image[extended / 2], sizeof(Pixel) * (size_x + extended));
     	//memcpy()
     }
     
@@ -115,13 +116,13 @@ int main(int argc, char **args)
     
     clock_gettime(CLOCK_REALTIME, &ts1);
     
-    strcat(fileName, "-mask");
+    strcat(file_name, "-mask");
     
-    file = open(fileName, O_WRONLY | O_CREAT, S_IRUSR);
+    file = open(file_name, O_WRONLY | O_CREAT, S_IRUSR);
     
-    for (i = 0; i < sizeY; i++)
+    for (i = 0; i < size_y; i++)
     {
-        io_result = write(file, result[i], sizeX * sizeof(Pixel));
+        io_result = write(file, result[i], size_x * sizeof(Pixel));
         
         if (io_result == -1)
         {
