@@ -43,7 +43,7 @@ int main(int argc, char **args)
     unsigned int extended_size_x;
     unsigned int extended_size_y;
     
-    MaskSize mask = MASK_3;
+    MaskSize mask = MASK_7;
     
     double time1;
     double time2;
@@ -70,12 +70,12 @@ int main(int argc, char **args)
     extended_size_x = size_x + extended;
     extended_size_y = size_y + extended;
     
-    Pixel **image  = malloc(sizeof(Pixel *) * (size_y + extended));
+    Pixel **image  = malloc(sizeof(Pixel *) * extended_size_y);
     Pixel **result = malloc(sizeof(Pixel *) * size_y);
     
-    for (i = 0; i < size_y + extended; i++)
+    for (i = 0; i < extended_size_y; i++)
     {
-        image[i]  = malloc(sizeof(Pixel) * (size_x + extended));
+        image[i]  = malloc(sizeof(Pixel) * extended_size_x);
         result[i] = malloc(sizeof(Pixel) * size_x);
     }
     
@@ -83,7 +83,7 @@ int main(int argc, char **args)
 
     int file = open(file_name, O_RDONLY);
     
-    for (i = extended / 2; i < size_y; i++)
+    for (i = extended / 2; i < size_y + extended / 2; i++)
     {
         io_result = read(file, image[i] + (extended / 2), size_x * sizeof(Pixel));
         
@@ -96,11 +96,31 @@ int main(int argc, char **args)
     close(file);
     
     // Kopiowanie skrajnych pikseli do obszaru rozszerzonego
-    for (i = 0; i < extended / 2; i++)
+    unsigned int index = extended / 2;
+    
+    for (i = 0; i < index; i++)
     {
-    	memcpy(image[i], image[extended / 2], sizeof(Pixel) * (size_x + extended));
-    	//memcpy()
+    	memcpy(image[i], image[index], sizeof(Pixel) * extended_size_x);
+    	
+    	unsigned int src_index = extended_size_y - index - 1;
+    	unsigned int des_index = extended_size_y - i - 1;
+    	
+    	memcpy(image[des_index], image[src_index], sizeof(Pixel) * extended_size_x);
     }
+    
+    for (i = 0; i < extended_size_y; i++)
+    {
+    	for (j = 0; j < index; j++)
+    	{
+    		memcpy(image[i] + j, image[i] + index, sizeof(Pixel));
+    		
+    		unsigned int src_index = extended_size_x - index - 1;
+    		unsigned int des_index = extended_size_x - j - 1;
+    		
+    		memcpy(image[i] + des_index, image[i] + src_index, sizeof(Pixel));
+    	}
+    }
+    //
     
     clock_gettime(CLOCK_REALTIME, &ts2);
     
@@ -116,13 +136,13 @@ int main(int argc, char **args)
     
     clock_gettime(CLOCK_REALTIME, &ts1);
     
-    strcat(file_name, "-mask");
+    strcat(file_name, "-test");
     
     file = open(file_name, O_WRONLY | O_CREAT, S_IRUSR);
     
-    for (i = 0; i < size_y; i++)
+    for (i = 0; i < extended_size_y; i++)
     {
-        io_result = write(file, result[i], size_x * sizeof(Pixel));
+        io_result = write(file, image[i], extended_size_x * sizeof(Pixel));
         
         if (io_result == -1)
         {
