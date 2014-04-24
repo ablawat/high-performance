@@ -42,8 +42,9 @@ int main(int argc, char **args)
     
     unsigned int extended_size_x;
     unsigned int extended_size_y;
+    unsigned int mask_size;
     
-    MaskSize mask = MASK_7;
+    MaskSize mask_type = MASK_3;
     
     double time1;
     double time2;
@@ -57,19 +58,23 @@ int main(int argc, char **args)
     size_y = atoi(args[3]);
     
     
-    switch (mask)
+    switch (mask_type)
     {
     	case MASK_3: extended = 2;
+    	             mask_size = 3;
     	             break;
     	case MASK_5: extended = 4;
+    	             mask_size = 5;
     	             break;
     	case MASK_7: extended = 6;
+    	             mask_size = 7;
     	             break;
     }
     
     extended_size_x = size_x + extended;
     extended_size_y = size_y + extended;
     
+    // Tworzy macierz wejściową i macierz wyjściową
     Pixel **image  = malloc(sizeof(Pixel *) * extended_size_y);
     Pixel **result = malloc(sizeof(Pixel *) * size_y);
     
@@ -79,8 +84,26 @@ int main(int argc, char **args)
         result[i] = malloc(sizeof(Pixel) * size_x);
     }
     
+    // Tworzy macierz maski
+    int **mask = malloc(sizeof(int *) * mask_size);
+    
+    for (i = 0; i < mask_size; i++)
+    {
+    	mask[i] = malloc(sizeof(int) * mask_size);
+    }
+    
+    // Wczytuje maskę
+    for (i = 0; i < mask_size; i++)
+    {
+    	for (j = 0; j < mask_size; j++)
+    	{
+    		mask[i][j] = 1;
+    	}
+    }
+    
     clock_gettime(CLOCK_REALTIME, &ts1);
-
+    
+    // Wczytuje macierz wejściową z pliku
     int file = open(file_name, O_RDONLY);
     
     for (i = extended / 2; i < size_y + extended / 2; i++)
@@ -95,7 +118,7 @@ int main(int argc, char **args)
     
     close(file);
     
-    // Kopiowanie skrajnych pikseli do obszaru rozszerzonego
+    // Kopiuje skrajne piksele do obszaru rozszerzonego
     unsigned int index = extended / 2;
     
     for (i = 0; i < index; i++)
@@ -126,13 +149,57 @@ int main(int argc, char **args)
     
     time1 = (ts2.tv_sec + ts2.tv_nsec / MLD) - (ts1.tv_sec + ts1.tv_nsec / MLD);
     
+    
     clock_gettime(CLOCK_REALTIME, &ts1);
+    int new_pixel_red;
+    int new_pixel_green;
+    int new_pixel_blue;
     
-    
+    int mask_x_index;
+    int mask_y_index;
+    int mask_x_value;
+    int mask_y_value;
+    puts("ok");
+    for (i = extended / 2; i < size_y + extended / 2; i++)
+    {
+    	for (j = extended / 2; j < size_x + extended / 2; j++)
+    	{
+    		new_pixel_red   = 0;
+    		new_pixel_green = 0;
+    		new_pixel_blue  = 0;
+    		
+    		mask_y_index = 0;
+    		mask_y_value = -(extended / 2);
+    		
+    		while (mask_y_value <= extended / 2)
+    		{
+    			mask_x_index = 0;
+    			mask_x_value = -(extended / 2);
+    			
+    			while (mask_x_value <= extended / 2)
+    			{
+    				new_pixel_red   += image[i + mask_y_value][j + mask_x_value].red   * mask[mask_y_index][mask_x_index];
+    				new_pixel_green += image[i + mask_y_value][j + mask_x_value].green * mask[mask_y_index][mask_x_index];
+    				new_pixel_blue  += image[i + mask_y_value][j + mask_x_value].blue  * mask[mask_y_index][mask_x_index];
+    				
+    				mask_x_index++;
+    				mask_x_value++;
+    			}
+    			
+    			mask_y_index++;
+    			mask_y_value++;
+    		}
+    		
+    		result[i - extended / 2][j - extended / 2].red   = (unsigned char)(new_pixel_red   / ((extended + 1) * (extended + 1)));
+    		result[i - extended / 2][j - extended / 2].green = (unsigned char)(new_pixel_green / ((extended + 1) * (extended + 1)));
+    		result[i - extended / 2][j - extended / 2].blue  = (unsigned char)(new_pixel_blue  / ((extended + 1) * (extended + 1)));
+    	}
+    }
     
     clock_gettime(CLOCK_REALTIME, &ts2);
     
     time2 = (ts2.tv_sec + ts2.tv_nsec / MLD) - (ts1.tv_sec + ts1.tv_nsec / MLD);
+    
     
     clock_gettime(CLOCK_REALTIME, &ts1);
     
@@ -140,9 +207,9 @@ int main(int argc, char **args)
     
     file = open(file_name, O_WRONLY | O_CREAT, S_IRUSR);
     
-    for (i = 0; i < extended_size_y; i++)
+    for (i = 0; i < size_y; i++)
     {
-        io_result = write(file, image[i], extended_size_x * sizeof(Pixel));
+        io_result = write(file, result[i], size_x * sizeof(Pixel));
         
         if (io_result == -1)
         {
