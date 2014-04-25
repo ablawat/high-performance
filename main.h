@@ -12,12 +12,12 @@
 	}
 	Pixel;
 	
-	typedef enum mask_size
+	typedef enum mask_type
 	{
 		MASK_3,
 		MASK_5,
 		MASK_7
 	}
-	MaskSize;
+	MaskType;
 
 #endif

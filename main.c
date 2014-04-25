@@ -8,13 +8,17 @@
 #include <time.h>
 
 #include "main.h"
+#include "calculation.h"
 
 int main(int argc, char **args)
 {
-    char file_name[128];
+    char image_file_name[128];
+    char mask_file_name[128];
     
     int io_result;
     int extended;
+    int index;
+    int mask_int;
     
     struct timespec ts1;
     struct timespec ts2;
@@ -26,7 +30,7 @@ int main(int argc, char **args)
     unsigned int extended_size_y;
     unsigned int mask_size;
     
-    MaskSize mask_type = MASK_3;
+    MaskType mask_type = MASK_3;
     
     double time1;
     double time2;
@@ -35,26 +39,33 @@ int main(int argc, char **args)
     int i, j;
     
     
-    strcpy(file_name, args[1]);
-    size_x = atoi(args[2]);
-    size_y = atoi(args[3]);
+    strcpy(image_file_name, args[1]);
+    strcpy(mask_file_name, args[2]);
+    size_x = atoi(args[3]);
+    size_y = atoi(args[4]);
+    mask_int = atoi(args[5]);
     
     
-    switch (mask_type)
+    switch (mask_int)
     {
-    	case MASK_3: extended = 2;
-    	             mask_size = 3;
-    	             break;
-    	case MASK_5: extended = 4;
-    	             mask_size = 5;
-    	             break;
-    	case MASK_7: extended = 6;
-    	             mask_size = 7;
-    	             break;
+    	case 3: extended = 2;
+    	        mask_size = 3;
+    	        mask_type = MASK_3;
+    	        break;
+    	case 5: extended = 4;
+    	        mask_size = 5;
+    	        mask_type = MASK_5;
+    	        break;
+    	case 7: extended = 6;
+    	        mask_size = 7;
+    	        mask_type = MASK_7;
+    	        break;
     }
     
     extended_size_x = size_x + extended;
     extended_size_y = size_y + extended;
+    
+    index = extended / 2;
     
     // Tworzy macierz wejściową i macierz wyjściową
     Pixel **image  = malloc(sizeof(Pixel *) * extended_size_y);
@@ -74,23 +85,15 @@ int main(int argc, char **args)
     	mask[i] = malloc(sizeof(int) * mask_size);
     }
     
-    // Wczytuje maskę
-    for (i = 0; i < mask_size; i++)
-    {
-    	for (j = 0; j < mask_size; j++)
-    	{
-    		mask[i][j] = 1;
-    	}
-    }
     
     clock_gettime(CLOCK_REALTIME, &ts1);
     
     // Wczytuje macierz wejściową z pliku
-    int file = open(file_name, O_RDONLY);
+    int file = open(image_file_name, O_RDONLY);
     
-    for (i = extended / 2; i < size_y + extended / 2; i++)
+    for (i = index; i < size_y + index; i++)
     {
-        io_result = read(file, image[i] + (extended / 2), size_x * sizeof(Pixel));
+        io_result = read(file, image[i] + index, size_x * sizeof(Pixel));
         
         if (io_result == -1)
         {
@@ -100,9 +103,31 @@ int main(int argc, char **args)
     
     close(file);
     
-    // Kopiuje skrajne piksele do obszaru rozszerzonego
-    unsigned int index = extended / 2;
+    // Wczytuje maskę
+    FILE *mask_file = fopen(mask_file_name, "r");
     
+    for (i = 0; i < mask_size; i++)
+    {
+        for (j = 0; j < mask_size; j++)
+        {
+        	fscanf(mask_file, "%d", &mask[i][j]);
+        }
+    }
+    
+    //Test
+    /*
+    for (i = 0; i < mask_size; i++)
+    {
+        for (j = 0; j < mask_size; j++)
+        {
+            printf("%d ", mask[i][j]);
+        }
+        
+        printf("\n");
+    }
+    */
+    
+    // Kopiuje skrajne piksele do obszaru rozszerzonego
     for (i = 0; i < index; i++)
     {
     	memcpy(image[i], image[index], sizeof(Pixel) * extended_size_x);
@@ -133,61 +158,8 @@ int main(int argc, char **args)
     
     
     clock_gettime(CLOCK_REALTIME, &ts1);
-    int new_pixel_red;
-    int new_pixel_green;
-    int new_pixel_blue;
     
-    int mask_x_index;
-    int mask_y_index;
-    int mask_x_value;
-    int mask_y_value;
-    
-    // Sumuje wszystkie wagi z maski
-    int mask_sum = 0;
-    
-    for (i = 0; i < mask_size; i++)
-    {
-        for (j = 0; j < mask_size; j++)
-        {
-        	mask_sum += mask[i][j];
-        }
-    }
-    
-    for (i = extended / 2; i < size_y + extended / 2; i++)
-    {
-    	for (j = extended / 2; j < size_x + extended / 2; j++)
-    	{
-    		new_pixel_red   = 0;
-    		new_pixel_green = 0;
-    		new_pixel_blue  = 0;
-    		
-    		mask_y_index = 0;
-    		mask_y_value = -(extended / 2);
-    		
-    		while (mask_y_value <= extended / 2)
-    		{
-    			mask_x_index = 0;
-    			mask_x_value = -(extended / 2);
-    			
-    			while (mask_x_value <= extended / 2)
-    			{
-    				new_pixel_red   += image[i + mask_y_value][j + mask_x_value].red   * mask[mask_y_index][mask_x_index];
-    				new_pixel_green += image[i + mask_y_value][j + mask_x_value].green * mask[mask_y_index][mask_x_index];
-    				new_pixel_blue  += image[i + mask_y_value][j + mask_x_value].blue  * mask[mask_y_index][mask_x_index];
-    				
-    				mask_x_index++;
-    				mask_x_value++;
-    			}
-    			
-    			mask_y_index++;
-    			mask_y_value++;
-    		}
-    		
-    		result[i - extended / 2][j - extended / 2].red   = new_pixel_red   / mask_sum;
-    		result[i - extended / 2][j - extended / 2].green = new_pixel_green / mask_sum;
-    		result[i - extended / 2][j - extended / 2].blue  = new_pixel_blue  / mask_sum;
-    	}
-    }
+    calculation(image, result, mask, size_x, size_y, mask_type);
     
     clock_gettime(CLOCK_REALTIME, &ts2);
     
@@ -196,9 +168,10 @@ int main(int argc, char **args)
     
     clock_gettime(CLOCK_REALTIME, &ts1);
     
-    strcat(file_name, "-test");
+    // Zapisuje macierz wyjściową do pliku
+    strcat(image_file_name, "-test");
     
-    file = open(file_name, O_WRONLY | O_CREAT, S_IRUSR);
+    file = open(image_file_name, O_WRONLY | O_CREAT, S_IRUSR);
     
     for (i = 0; i < size_y; i++)
     {
@@ -216,6 +189,7 @@ int main(int argc, char **args)
     
     time3 = (ts2.tv_sec + ts2.tv_nsec / MLD) - (ts1.tv_sec + ts1.tv_nsec / MLD);
     
+    // Wyświetla czasy
     printf("Read Time  = %3.10lf\n", time1);
     printf("Calc Time  = %3.10lf\n", time2);
     printf("Write Time = %3.10lf\n", time3);
