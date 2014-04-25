@@ -7,30 +7,12 @@
 #include <string.h>
 #include <time.h>
 
-#define MLD 1000000000.0
-
-typedef struct pixel
-{
-    unsigned char red;
-    unsigned char green;
-    unsigned char blue;
-}
-Pixel;
-
-typedef enum mask_size
-{
-    MASK_3,
-    MASK_5,
-    MASK_7
-}
-MaskSize;
+#include "main.h"
 
 int main(int argc, char **args)
 {
     char file_name[128];
     
-    int values[4];
-    int max_value;
     int io_result;
     int extended;
     
@@ -50,7 +32,7 @@ int main(int argc, char **args)
     double time2;
     double time3;
     
-    int i, j, k;
+    int i, j;
     
     
     strcpy(file_name, args[1]);
@@ -159,7 +141,18 @@ int main(int argc, char **args)
     int mask_y_index;
     int mask_x_value;
     int mask_y_value;
-    puts("ok");
+    
+    // Sumuje wszystkie wagi z maski
+    int mask_sum = 0;
+    
+    for (i = 0; i < mask_size; i++)
+    {
+        for (j = 0; j < mask_size; j++)
+        {
+        	mask_sum += mask[i][j];
+        }
+    }
+    
     for (i = extended / 2; i < size_y + extended / 2; i++)
     {
     	for (j = extended / 2; j < size_x + extended / 2; j++)
@@ -190,9 +183,9 @@ int main(int argc, char **args)
     			mask_y_value++;
     		}
     		
-    		result[i - extended / 2][j - extended / 2].red   = (unsigned char)(new_pixel_red   / ((extended + 1) * (extended + 1)));
-    		result[i - extended / 2][j - extended / 2].green = (unsigned char)(new_pixel_green / ((extended + 1) * (extended + 1)));
-    		result[i - extended / 2][j - extended / 2].blue  = (unsigned char)(new_pixel_blue  / ((extended + 1) * (extended + 1)));
+    		result[i - extended / 2][j - extended / 2].red   = new_pixel_red   / mask_sum;
+    		result[i - extended / 2][j - extended / 2].green = new_pixel_green / mask_sum;
+    		result[i - extended / 2][j - extended / 2].blue  = new_pixel_blue  / mask_sum;
     	}
     }
     
