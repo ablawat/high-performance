@@ -48,18 +48,18 @@ int main(int argc, char **args)
     
     switch (mask_int)
     {
-    	case 3: extended = 2;
-    	        mask_size = 3;
-    	        mask_type = MASK_3;
-    	        break;
-    	case 5: extended = 4;
-    	        mask_size = 5;
-    	        mask_type = MASK_5;
-    	        break;
-    	case 7: extended = 6;
-    	        mask_size = 7;
-    	        mask_type = MASK_7;
-    	        break;
+        case 3: extended = 2;
+                mask_size = 3;
+                mask_type = MASK_3;
+                break;
+        case 5: extended = 4;
+                mask_size = 5;
+                mask_type = MASK_5;
+                break;
+        case 7: extended = 6;
+                mask_size = 7;
+                mask_type = MASK_7;
+                break;
     }
     
     extended_size_x = size_x + extended;
@@ -82,7 +82,7 @@ int main(int argc, char **args)
     
     for (i = 0; i < mask_size; i++)
     {
-    	mask[i] = malloc(sizeof(int) * mask_size);
+        mask[i] = malloc(sizeof(int) * mask_size);
     }
     
     
@@ -110,7 +110,7 @@ int main(int argc, char **args)
     {
         for (j = 0; j < mask_size; j++)
         {
-        	fscanf(mask_file, "%d", &mask[i][j]);
+            fscanf(mask_file, "%d", &mask[i][j]);
         }
     }
     
@@ -130,25 +130,25 @@ int main(int argc, char **args)
     // Kopiuje skrajne piksele do obszaru rozszerzonego
     for (i = 0; i < index; i++)
     {
-    	memcpy(image[i], image[index], sizeof(Pixel) * extended_size_x);
-    	
-    	unsigned int src_index = extended_size_y - index - 1;
-    	unsigned int des_index = extended_size_y - i - 1;
-    	
-    	memcpy(image[des_index], image[src_index], sizeof(Pixel) * extended_size_x);
+        memcpy(image[i], image[index], sizeof(Pixel) * extended_size_x);
+        
+        unsigned int src_index = extended_size_y - index - 1;
+        unsigned int des_index = extended_size_y - i - 1;
+        
+        memcpy(image[des_index], image[src_index], sizeof(Pixel) * extended_size_x);
     }
     
     for (i = 0; i < extended_size_y; i++)
     {
-    	for (j = 0; j < index; j++)
-    	{
-    		memcpy(image[i] + j, image[i] + index, sizeof(Pixel));
-    		
-    		unsigned int src_index = extended_size_x - index - 1;
-    		unsigned int des_index = extended_size_x - j - 1;
-    		
-    		memcpy(image[i] + des_index, image[i] + src_index, sizeof(Pixel));
-    	}
+        for (j = 0; j < index; j++)
+        {
+            memcpy(image[i] + j, image[i] + index, sizeof(Pixel));
+            
+            unsigned int src_index = extended_size_x - index - 1;
+            unsigned int des_index = extended_size_x - j - 1;
+            
+            memcpy(image[i] + des_index, image[i] + src_index, sizeof(Pixel));
+        }
     }
     //
     
