@@ -40,7 +40,7 @@ void calculation(Pixel **image, Pixel **result, int **mask, unsigned int size_x,
         }
     }
     
-    #pragma omp parallel for
+    #pragma omp parallel for shared(image, result, mask)
     for (i = index; i < size_y + index; i++)
     {
         for (j = index; j < size_x + index; j++)
