@@ -153,7 +153,6 @@ int main(int argc, char **args)
     //
     
     clock_gettime(CLOCK_REALTIME, &ts2);
-    
     time1 = (ts2.tv_sec + ts2.tv_nsec / MLD) - (ts1.tv_sec + ts1.tv_nsec / MLD);
     
     
@@ -162,7 +161,6 @@ int main(int argc, char **args)
     calculation(image, result, mask, size_x, size_y, mask_type);
     
     clock_gettime(CLOCK_REALTIME, &ts2);
-    
     time2 = (ts2.tv_sec + ts2.tv_nsec / MLD) - (ts1.tv_sec + ts1.tv_nsec / MLD);
     
     
@@ -186,13 +184,12 @@ int main(int argc, char **args)
     close(file);
     
     clock_gettime(CLOCK_REALTIME, &ts2);
-    
     time3 = (ts2.tv_sec + ts2.tv_nsec / MLD) - (ts1.tv_sec + ts1.tv_nsec / MLD);
     
     // Wyświetla czasy
-    printf("Read Time  = %3.10lf\n", time1);
-    printf("Calc Time  = %3.10lf\n", time2);
-    printf("Write Time = %3.10lf\n", time3);
+    printf("%2.8lf\n", time1);
+    printf("%2.8lf\n", time2);
+    printf("%2.8lf\n", time3);
     
     return 0;
 }
